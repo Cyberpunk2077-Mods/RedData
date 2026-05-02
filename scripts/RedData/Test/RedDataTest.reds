@@ -1,7 +1,6 @@
 module RedData.Test
 
 import RedData.Json.*
-import Codeware.*
 
 public class RedDataTest extends ScriptableEnv {
   private let m_runner: ref<RedTest>;
@@ -19,6 +18,6 @@ public class RedDataTest extends ScriptableEnv {
 
 }
 
-public static func GetRedDataTest() -> ref<RedDataTest> {
+public func GetRedDataTest() -> ref<RedDataTest> {
   return ScriptableEnv.Get(n"RedDataTest") as RedDataTest;
 }

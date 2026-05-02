@@ -9,6 +9,10 @@ public class JsonObjectTest extends JsonBaseTest {
     this.m_name = "JsonObject";
   }
 
+  public func Setup() {
+    
+  }
+
   private cb func Test_Constructor() {
     let object = new JsonObject();
 

@@ -9,6 +9,10 @@ public class JsonArrayTest extends JsonBaseTest {
     this.m_name = "JsonArray";
   }
 
+  public func Setup() {
+    
+  }
+
   private cb func Test_Constructor() {
     let array = new JsonArray();
 

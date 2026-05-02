@@ -3,40 +3,40 @@ module RedData.Test
 import RedData.Json.*
 
 public class TypesDto {
-  let pBool: Bool;
+  public let pBool: Bool;
 
-  let pInt8: Int8;
-  let pInt16: Int16;
-  let pInt32: Int32;
-  let pInt64: Int64;
+  public let pInt8: Int8;
+  public let pInt16: Int16;
+  public let pInt32: Int32;
+  public let pInt64: Int64;
 
-  let pUint8: Uint8;
-  let pUint16: Uint16;
-  let pUint32: Uint32;
-  let pUint64: Uint64;
+  public let pUint8: Uint8;
+  public let pUint16: Uint16;
+  public let pUint32: Uint32;
+  public let pUint64: Uint64;
 
-  let pFloat: Float;
-  let pFloatInt: Float;
-  let pDouble: Double;
-  let pDoubleInt: Double;
+  public let pFloat: Float;
+  public let pFloatInt: Float;
+  public let pDouble: Double;
+  public let pDoubleInt: Double;
 
-  let pString: String;
-  let pCName: CName;
-  let pResRef: ResRef;
-  let pTweakDBID: TweakDBID;
+  public let pString: String;
+  public let pCName: CName;
+  public let pResRef: ResRef;
+  public let pTweakDBID: TweakDBID;
 }
 
 public class SessionDto {
-  let id: Uint64;
-  let createdAt: Int32;
-  let user: ref<UserDto>;
-  let empty: ref<UserDto>;
-  let friends: array<ref<FriendDto>>;
+  public let id: Uint64;
+  public let createdAt: Int32;
+  public let user: ref<UserDto>;
+  public let empty: ref<UserDto>;
+  public let friends: array<ref<FriendDto>>;
 }
 
 public class FriendDto {
-  let id: Uint64;
-  let username: String;
+  public let id: Uint64;
+  public let username: String;
 
   public static func Create(id: Uint64, username: String) -> ref<FriendDto> {
     let self = new FriendDto();
@@ -48,12 +48,12 @@ public class FriendDto {
 }
 
 public class UserDto {
-  let id: Uint64;
-  let username: String;
-  let isAdmin: Bool;
-  let words: array<String>;
-  let i8: array<Int8>;
-  let names: array<CName>;
+  public let id: Uint64;
+  public let username: String;
+  public let isAdmin: Bool;
+  public let words: array<String>;
+  public let i8: array<Int8>;
+  public let names: array<CName>;
 }
 
 public class JsonTest extends JsonBaseTest {
@@ -220,7 +220,7 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("Json is valid", IsDefined(json), true);
 
     if !pass {
-      LogChannel(n"Error", "/!\\ Failed to parse Json /!\\");
+      FTLogError("/!\\ Failed to parse Json /!\\");
       return;
     }
     this.ExpectJsonKeyString("$.name == 'FileSystemTest'", json, "name", "FileSystemTest");
@@ -231,7 +231,7 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("$.pangrams === {...}", pangrams.IsObject(), true);
 
     if !pass {
-      LogChannel(n"Error", "$.pangrams /!\\ invalid Json format /!\\");
+      FTLogError("$.pangrams /!\\ invalid Json format /!\\");
       return;
     }
     this.ExpectJsonKeyUnicodeString("$.pangrams.Arabic", pangrams, "Arabic", "صِف خَلقَ خَودِ كَمِثلِ الشَمسِ إِذ بَزَغَت — يَحظى الضَجيعُ بِها نَجلاءَ مِعطارِ (A poem by Al Farāhīdi)");
@@ -242,7 +242,7 @@ public class JsonTest extends JsonBaseTest {
 
     pass = this.ExpectBool("$.random === [...]", random.IsArray(), true);
     if !pass {
-      LogChannel(n"Error", "$.random /!\\ invalid Json format /!\\");
+      FTLogError("$.random /!\\ invalid Json format /!\\");
       return;
     }
     this.ExpectBool("$.random[0]", random.GetItemBool(0u), true);
@@ -253,7 +253,7 @@ public class JsonTest extends JsonBaseTest {
 
     pass = this.ExpectBool("$.random[4] === {...}", obj.IsObject(), true);
     if !pass {
-      LogChannel(n"Error", "$.random[4] /!\\ invalid Json format /!\\");
+      FTLogError("$.random[4] /!\\ invalid Json format /!\\");
       return;
     }
     this.ExpectJsonKeyNull("$.random[4].object", obj, "object");
@@ -261,7 +261,7 @@ public class JsonTest extends JsonBaseTest {
 
     pass = this.ExpectBool("$.random[5] === [...]", array.IsArray(), true);
     if !pass {
-      LogChannel(n"Error", "$.random[5] /!\\ invalid Json format /!\\");
+      FTLogError("$.random[5] /!\\ invalid Json format /!\\");
       return;
     }
     this.ExpectString("$.random[5][0]", array.GetItemString(0u), "array");
@@ -272,7 +272,7 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("Parse Json fails", IsDefined(json), false);
 
     if !pass {
-      LogChannel(n"Error", "/!\\ Parsing Json must fails /!\\");
+      FTLogError("/!\\ Parsing Json must fails /!\\");
       return;
     }
     let object = FromJson(json, n"RedData.Test.TypesDto") as TypesDto;
@@ -285,14 +285,14 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("Parse Json", IsDefined(json), true);
 
     if !pass {
-      LogChannel(n"Error", "/!\\ Failed to parse Json /!\\");
+      FTLogError("/!\\ Failed to parse Json /!\\");
       return;
     }
     let dto = FromJson(json, n"RedData.Test.TypesDto") as TypesDto;
 
     pass = this.ExpectBool("TypesDto is defined", IsDefined(dto), true);
     if !pass {
-      LogChannel(n"Error", s"Failed to transform Json to Dto!");
+      FTLogError(s"Failed to transform Json to Dto!");
       return;
     }
     this.ExpectBool("dto.pBool == true", dto.pBool, true);
@@ -323,14 +323,14 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("Parse Json", IsDefined(json), true);
 
     if !pass {
-      LogChannel(n"Error", "/!\\ Failed to parse Json /!\\");
+      FTLogError("/!\\ Failed to parse Json /!\\");
       return;
     }
     let session = FromJson(json, n"RedData.Test.SessionDto") as SessionDto;
 
     pass = this.ExpectBool("session == {...}", IsDefined(session), true);
     if !pass {
-      LogChannel(n"Error", s"Failed to transform Json to Dto!");
+      FTLogError(s"Failed to transform Json to Dto!");
       return;
     }
     this.ExpectUint64("session.id == 1337", session.id, 1337ul);
@@ -342,7 +342,7 @@ public class JsonTest extends JsonBaseTest {
 
     pass = this.ExpectBool("session.user == {...}", IsDefined(user), true);
     if !pass {
-      LogChannel(n"Error", s"Failed to transform Json to Dto!");
+      FTLogError(s"Failed to transform Json to Dto!");
     } else {
       this.ExpectUint64("session.user.id == 42", user.id, 42ul);
       this.ExpectString("session.user.username == 'NightCity'", user.username, "NightCity");
@@ -370,7 +370,7 @@ public class JsonTest extends JsonBaseTest {
     this.ExpectBool("session.friends == [...]", true, true);
     this.ExpectInt32("session.friends.length == 4", ArraySize(friends), 4);
     if ArraySize(friends) != 4 {
-      LogChannel(n"Error", s"Failed to transform Json to Dto!");
+      FTLogError(s"Failed to transform Json to Dto!");
     } else {
       this.ExpectUint64("session.friends[0].id == 1", friends[0].id, 1ul);
       this.ExpectString("session.friends[0].username == \"Welles\"", friends[0].username, "Welles");
@@ -401,12 +401,12 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("To Json", IsDefined(json), true);
 
     if !pass {
-      LogChannel(n"Error", "/!\\ Failed to transform to Json /!\\");
+      FTLogError("/!\\ Failed to transform to Json /!\\");
       return;
     }
     pass = this.ExpectBool("$ == {...}", json.IsObject(), true);
     if !pass {
-      LogChannel(n"Error", "/!\\ JsonObject is expected in schema /!\\");
+      FTLogError("/!\\ JsonObject is expected in schema /!\\");
       return;
     }
     let obj = json as JsonObject;
@@ -457,12 +457,12 @@ public class JsonTest extends JsonBaseTest {
     let pass = this.ExpectBool("To Json Nested", IsDefined(json), true);
 
     if !pass {
-      LogChannel(n"Error", "/!\\ Failed to transform to Json /!\\");
+      FTLogError("/!\\ Failed to transform to Json /!\\");
       return;
     }
     pass = this.ExpectBool("$ == {...}", json.IsObject(), true);
     if !pass {
-      LogChannel(n"Error", "/!\\ JsonObject is expected in schema /!\\");
+      FTLogError("/!\\ JsonObject is expected in schema /!\\");
       return;
     }
     let obj = json as JsonObject;
@@ -476,7 +476,7 @@ public class JsonTest extends JsonBaseTest {
 
     pass = this.ExpectBool("$.user == {...}", user.IsObject(), true);
     if !pass {
-      LogChannel(n"Error", "/!\\ JsonObject is expected in schema /!\\");
+      FTLogError("/!\\ JsonObject is expected in schema /!\\");
     } else {
       this.ExpectJsonKeyUint64("$.user.id == 42", user, "id", 42ul);
       this.ExpectJsonKeyString("$.user.username == 'NightCity'", user, "username", "NightCity");
@@ -485,7 +485,7 @@ public class JsonTest extends JsonBaseTest {
 
       pass = this.ExpectBool("$.user.words == [...]", words.IsArray(), true);
       if !pass {
-        LogChannel(n"Error", "/!\\ JsonArray is expected in schema /!\\");
+        FTLogError("/!\\ JsonArray is expected in schema /!\\");
       } else {
         this.ExpectUint32("$.user.words.length == 3", words.GetSize(), 3u);
         this.ExpectString("$.user.words[0] == 'Hello'", words.GetItemString(0u), "Hello");
@@ -496,7 +496,7 @@ public class JsonTest extends JsonBaseTest {
 
       pass = this.ExpectBool("$.user.i8 == [...]", i8.IsArray(), true);
       if !pass {
-        LogChannel(n"Error", "/!\\ JsonArray is expected in schema /!\\");
+        FTLogError("/!\\ JsonArray is expected in schema /!\\");
       } else {
         this.ExpectUint32("$.user.i8.length == 5", i8.GetSize(), 5u);
         this.ExpectInt64("$.user.i8[0] == -128", i8.GetItemInt64(0u), -128l);
@@ -509,7 +509,7 @@ public class JsonTest extends JsonBaseTest {
 
       pass = this.ExpectBool("$.user.names == [...]", names.IsArray(), true);
       if !pass {
-        LogChannel(n"Error", "/!\\ JsonArray is expected in schema /!\\");
+        FTLogError("/!\\ JsonArray is expected in schema /!\\");
       } else {
         this.ExpectUint32("$.user.names.length == 3", names.GetSize(), 3u);
         this.ExpectString("$.user.names[0] == n'VehicleObject'", names.GetItemString(0u), "VehicleObject");
@@ -521,11 +521,11 @@ public class JsonTest extends JsonBaseTest {
 
     pass = this.ExpectBool("$.friends == [...]", friends.IsArray(), true);
     if !pass {
-      LogChannel(n"Error", "/!\\ JsonArray is expected in schema /!\\");
+      FTLogError("/!\\ JsonArray is expected in schema /!\\");
     } else {
       this.ExpectUint32("$.friends.length == 4", friends.GetSize(), 4u);
       if friends.GetSize() != 4u {
-        LogChannel(n"Error", s"Failed to transform Dto to Json!");
+        FTLogError(s"Failed to transform Dto to Json!");
       } else {
         let friend = friends.GetItem(0u) as JsonObject;
 
