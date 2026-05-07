@@ -7,7 +7,7 @@ namespace RedData::Json {
 void object_to_json_set_key(const Red::Handle<JsonObject>& p_json,
                             Red::CProperty*& p_prop,
                             const Red::Handle<Red::IScriptable>& p_object);
-void array_to_json(const Red::Handle<JsonArray>& p_json, const Red::CBaseRTTIType* p_type,
+void array_to_json(const Red::Handle<JsonArray>& p_json, const Red::rtti::IType* p_type,
                    Red::CProperty*& p_prop,
                    const Red::Handle<Red::IScriptable>& p_object);
 
@@ -63,9 +63,47 @@ void object_to_json_set_key(const Red::Handle<JsonObject>& p_json,
       return;
       // clang-format on
   }
-  const Red::ERTTIType type = p_prop->type->GetType();
+  const Red::rtti::ERTTIType type = p_prop->type->GetType();
 
-  if (type == Red::ERTTIType::Handle) {
+  if (type == Red::rtti::ERTTIType::Enum) {
+    const auto enum_type = reinterpret_cast<Red::CEnum*>(p_prop->type);
+    switch (enum_type->GetSize()) {
+      case 1:
+        p_json->set_key_int64(name, p_prop->GetValue<int8_t>(p_object.instance));
+        break;
+      case 2:
+        p_json->set_key_int64(name, p_prop->GetValue<int16_t>(p_object.instance));
+        break;
+      case 4:
+        p_json->set_key_int64(name, p_prop->GetValue<int32_t>(p_object.instance));
+        break;
+      case 8:
+        p_json->set_key_int64(name, p_prop->GetValue<int64_t>(p_object.instance));
+        break;
+      default:
+        p_json->set_key_null(name);
+        break;
+    }
+  } else if (type == Red::rtti::ERTTIType::BitField) {
+    const auto bitfield = reinterpret_cast<Red::CBitfield*>(p_prop->type);
+    switch (bitfield->GetSize()) {
+      case 1:
+        p_json->set_key_int64(name, p_prop->GetValue<int8_t>(p_object.instance));
+        break;
+      case 2:
+        p_json->set_key_int64(name, p_prop->GetValue<int16_t>(p_object.instance));
+        break;
+      case 4:
+        p_json->set_key_int64(name, p_prop->GetValue<int32_t>(p_object.instance));
+        break;
+      case 8:
+        p_json->set_key_int64(name, p_prop->GetValue<int64_t>(p_object.instance));
+        break;
+      default:
+        p_json->set_key_null(name);
+        break;
+    }
+  } else if (type == Red::rtti::ERTTIType::Handle) {
     const auto inner_object =
       p_prop->GetValue<Red::Handle<Red::IScriptable>>(p_object.instance);
 
@@ -76,15 +114,9 @@ void object_to_json_set_key(const Red::Handle<JsonObject>& p_json,
 
       p_json->set_key(name, inner_json);
     }
-    return;
-  }
-
-  if (type == Red::ERTTIType::WeakHandle) {
+  } else if (type == Red::rtti::ERTTIType::WeakHandle) {
     p_json->set_key_null(name);
-    return;
-  }
-
-  if (type == Red::ERTTIType::Array) {
+  } else if (type == Red::rtti::ERTTIType::Array) {
     const auto inner_type =
         reinterpret_cast<Red::CRTTIArrayType*>(p_prop->type)->innerType;
     auto inner_json = JsonFactory::CreateArray();
@@ -104,7 +136,7 @@ void object_to_json_set_key(const Red::Handle<JsonObject>& p_json,
     return;                                                                \
   }
 
-void array_to_json(const Red::Handle<JsonArray>& p_json, const Red::CBaseRTTIType* p_type,
+void array_to_json(const Red::Handle<JsonArray>& p_json, const Red::rtti::IType* p_type,
                    Red::CProperty*& p_prop,
                    const Red::Handle<Red::IScriptable>& p_object) {
   const Red::CName type_name = p_type->GetName();
@@ -130,7 +162,45 @@ void array_to_json(const Red::Handle<JsonArray>& p_json, const Red::CBaseRTTITyp
       // clang-format on
   }
 
-  if (p_type->GetType() == Red::ERTTIType::Handle) {
+  if (p_type->GetType() == Red::rtti::ERTTIType::Enum) {
+    const auto enum_type = reinterpret_cast<Red::CEnum*>(p_prop->type);
+    switch (enum_type->GetSize()) {
+      case 1:
+        p_json->add_item_int64(p_prop->GetValue<int8_t>(p_object.instance));
+        break;
+      case 2:
+        p_json->add_item_int64(p_prop->GetValue<int16_t>(p_object.instance));
+        break;
+      case 4:
+        p_json->add_item_int64(p_prop->GetValue<int32_t>(p_object.instance));
+        break;
+      case 8:
+        p_json->add_item_int64(p_prop->GetValue<int64_t>(p_object.instance));
+        break;
+      default:
+        p_json->add_item_null();
+        break;
+    }
+  } else if (p_type->GetType() == Red::rtti::ERTTIType::BitField) {
+    const auto bitfield = reinterpret_cast<Red::CBitfield*>(p_prop->type);
+    switch (bitfield->GetSize()) {
+      case 1:
+        p_json->add_item_int64(p_prop->GetValue<int8_t>(p_object.instance));
+        break;
+      case 2:
+        p_json->add_item_int64(p_prop->GetValue<int16_t>(p_object.instance));
+        break;
+      case 4:
+        p_json->add_item_int64(p_prop->GetValue<int32_t>(p_object.instance));
+        break;
+      case 8:
+        p_json->add_item_int64(p_prop->GetValue<int64_t>(p_object.instance));
+        break;
+      default:
+        p_json->add_item_null();
+        break;
+    }
+  } else if (p_type->GetType() == Red::rtti::ERTTIType::Handle) {
     auto array = p_prop->GetValue<Red::DynArray<Red::Handle<Red::IScriptable>>>(
       p_object.instance);
 
@@ -141,18 +211,14 @@ void array_to_json(const Red::Handle<JsonArray>& p_json, const Red::CBaseRTTITyp
         p_json->add_item(to_json(item));
       }
     }
-    return;
-  }
-
-  if (p_type->GetType() == Red::ERTTIType::WeakHandle) {
+  } else if (p_type->GetType() == Red::rtti::ERTTIType::WeakHandle) {
     const auto array =
         p_prop->GetValue<Red::DynArray<Red::WeakHandle<Red::IScriptable>>>(
           p_object.instance);
 
-    for (uint32_t i = 0; i < array.size; i++) {
+    for (unsigned int i = 0; i < array.Size(); i++) {
       p_json->add_item_null();
     }
-    return;
   }
 
   /* else if (p_type->GetType() == Red::ERTTIType::Array) {

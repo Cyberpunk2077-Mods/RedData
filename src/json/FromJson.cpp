@@ -8,12 +8,12 @@ void object_from_json_set_property(const Red::Handle<JsonVariant>& p_field,
                                    Red::CProperty*& p_prop,
                                    const Red::Handle<Red::IScriptable>& p_object);
 
-void array_from_json(const JsonArray*& p_json, Red::CBaseRTTIType* p_type,
+void array_from_json(const JsonArray*& p_json, const Red::rtti::IType* p_type,
                      Red::CProperty*& p_prop,
                      const Red::Handle<Red::IScriptable>& p_object);
 template <typename T>
 void array_from_json_fill(const JsonArray*& p_json, Red::DynArray<T>& p_array,
-                          Red::CBaseRTTIType* p_inner_type = nullptr);
+                          Red::rtti::IType* p_inner_type = nullptr);
 
 Red::Handle<Red::IScriptable> from_json(const Red::Handle<JsonObject>& p_json,
                                         const Red::CName& p_type) {
@@ -55,7 +55,7 @@ void object_from_json(const JsonObject*& p_json,
     return;                                     \
   }
 
-void array_from_json(const JsonArray*& p_json, Red::CBaseRTTIType* p_type,
+void array_from_json(const JsonArray*& p_json, const Red::rtti::IType* p_type,
                      Red::CProperty*& p_prop,
                      const Red::Handle<Red::IScriptable>& p_object) {
   const Red::CName type_name = p_type->GetName();
@@ -76,16 +76,23 @@ void array_from_json(const JsonArray*& p_json, Red::CBaseRTTIType* p_type,
     case Red::GetTypeName<Red::CName>(): FILL_ARRAY(Red::CName)
     case Red::GetTypeName<Red::ResRef>(): FILL_ARRAY(Red::ResRef)
     case Red::GetTypeName<Red::TweakDBID>(): FILL_ARRAY(Red::TweakDBID)
+    default:
+      break;
       // clang-format on
   }
 
-  if (p_type->GetType() == Red::ERTTIType::Handle) {
+  /*if (p_type->GetType() == Red::rtti::ERTTIType::Enum) {
+    // TODO
+    p_prop->SetValue(p_object.instance, enum_value);
+  } else if (p_type->GetType() == Red::rtti::ERTTIType::BitField) {
+    // TODO
+  } else */if (p_type->GetType() == Red::rtti::ERTTIType::Handle) {
     const auto inner_type = reinterpret_cast<const Red::CRTTIHandleType*>(p_type)->innerType;
     Red::DynArray<Red::Handle<Red::IScriptable>> array;
 
     array_from_json_fill(p_json, array, inner_type);
     p_prop->SetValue(p_object.instance, array);
-  } else if (p_type->GetType() == Red::ERTTIType::WeakHandle) {
+  } else if (p_type->GetType() == Red::rtti::ERTTIType::WeakHandle) {
     Red::DynArray<Red::WeakHandle<Red::IScriptable>> array;
 
     array_from_json_fill(p_json, array);
@@ -107,7 +114,7 @@ void object_from_json_set_property(const Red::Handle<JsonVariant>& p_field,
                                    Red::CProperty*& p_prop,
                                    const Red::Handle<Red::IScriptable>& p_object) {
   const Red::CName type_name = p_prop->type->GetName();
-  const Red::CBaseRTTIType* type = p_prop->type;
+  const Red::rtti::IType* type = p_prop->type;
 
   switch (type_name) {
       // clang-format off
@@ -130,8 +137,7 @@ void object_from_json_set_property(const Red::Handle<JsonVariant>& p_field,
     case Red::GetTypeName<Red::ResRef>(): {
       Red::ResRef res_ref;
 
-      res_ref.resource = Red::RaRef<Red::CResource>(
-        Red::ResourcePath(p_field->get_string().c_str()));
+      res_ref.resource = Red::RaRef(Red::ResourcePath(p_field->get_string().c_str()));
       p_prop->SetValue(p_object.instance, res_ref);
       return;
     }
@@ -141,7 +147,49 @@ void object_from_json_set_property(const Red::Handle<JsonVariant>& p_field,
       // clang-format on
   }
 
-  if (type->GetType() == Red::ERTTIType::Handle) {
+  if (type->GetType() == Red::rtti::ERTTIType::Enum) {
+    const auto [memory, size] = type->GetAllocator()->AllocAligned(type->GetSize(), type->GetAlignment());
+    const auto enum_type = reinterpret_cast<const Red::CEnum*>(type);
+    enum_type->Construct(memory);
+    switch (enum_type->GetSize()) {
+      case 1:
+        *static_cast<int8_t*>(memory) = p_field->get_int64();
+        break;
+      case 2:
+        *static_cast<int16_t*>(memory) = p_field->get_int64();
+        break;
+      case 4:
+        *static_cast<int32_t*>(memory) = p_field->get_int64();
+        break;
+      case 8:
+        *static_cast<int64_t*>(memory) = p_field->get_int64();
+        break;
+      default:
+        break;
+    }
+    p_prop->SetValue(p_object.instance, memory);
+  } else if (type->GetType() == Red::rtti::ERTTIType::BitField) {
+    const auto [memory, size] = type->GetAllocator()->AllocAligned(type->GetSize(), type->GetAlignment());
+    const auto bitfield = reinterpret_cast<const Red::CBitfield*>(type);
+    bitfield->Construct(memory);
+    switch (bitfield->GetSize()) {
+      case 1:
+        *static_cast<int8_t*>(memory) = p_field->get_int64();
+        break;
+      case 2:
+        *static_cast<int16_t*>(memory) = p_field->get_int64();
+        break;
+      case 4:
+        *static_cast<int32_t*>(memory) = p_field->get_int64();
+        break;
+      case 8:
+        *static_cast<int64_t*>(memory) = p_field->get_int64();
+        break;
+      default:
+        break;
+    }
+    p_prop->SetValue(p_object.instance, memory);
+  } else if (type->GetType() == Red::rtti::ERTTIType::Handle) {
     if (!p_field->is_object() || p_field->is_null()) {
       const Red::Handle<Red::IScriptable> empty;
       p_prop->SetValue(p_object.instance, empty);
@@ -153,27 +201,20 @@ void object_from_json_set_property(const Red::Handle<JsonVariant>& p_field,
       object_from_json(inner_json, inner_object);
       p_prop->SetValue(p_object.instance, inner_object);
     }
-    return;
-  }
-
-  if (type->GetType() == Red::ERTTIType::WeakHandle) {
+  } else if (type->GetType() == Red::rtti::ERTTIType::WeakHandle) {
     const Red::WeakHandle<Red::IScriptable> empty;
     p_prop->SetValue(p_object.instance, empty);
-    return;
-  }
-
-  if (type->GetType() == Red::ERTTIType::Array && p_field->is_array()) {
+  } else if (type->GetType() == Red::rtti::ERTTIType::Array && p_field->is_array()) {
     const auto inner_type = reinterpret_cast<const Red::CRTTIArrayType*>(type)->innerType;
     auto inner_json = p_field.GetPtr<const JsonArray>();
 
     array_from_json(inner_json, inner_type, p_prop, p_object);
-    return;
   }
 }
 
 template <typename T>
 void array_from_json_fill(const JsonArray*& p_json, Red::DynArray<T>& p_array,
-                          Red::CBaseRTTIType* p_inner_type) {
+                          Red::rtti::IType* p_inner_type) {
   for (uint32_t i = 0; i < p_json->get_size(); i++) {
     if constexpr (std::is_same_v<T, bool>) {
       p_array.PushBack(p_json->get_item_bool(i));

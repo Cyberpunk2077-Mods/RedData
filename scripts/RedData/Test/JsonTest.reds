@@ -2,6 +2,12 @@ module RedData.Test
 
 import RedData.Json.*
 
+public enum CustomEnum {
+  A = 1,
+  B = 2,
+  C = 3
+}
+
 public class TypesDto {
   public let pBool: Bool;
 
@@ -20,6 +26,7 @@ public class TypesDto {
   public let pDouble: Double;
   public let pDoubleInt: Double;
 
+  public let pEnum: CustomEnum;
   public let pString: String;
   public let pCName: CName;
   public let pResRef: ResRef;
@@ -72,7 +79,7 @@ public class JsonTest extends JsonBaseTest {
     this.m_jsonDto +=   "\"pInt8\": 127,\"pInt16\": 32767,\"pInt32\": 2147483647,\"pInt64\": 9223372036854775807,";
     this.m_jsonDto +=   "\"pUint8\": 255,\"pUint16\": 65535,\"pUint32\": 4294967295,\"pUint64\": 18446744073709551615,";
     this.m_jsonDto +=   "\"pFloat\": 3.141592, \"pFloatInt\": 1,\"pDouble\": 3.141592653589793, \"pDoubleInt\": 42,";
-    this.m_jsonDto +=   "\"pString\": \"Hello world!\",\"pCName\": \"VehicleObject\",\"pResRef\": \"base\\\\anim_cooked.cookedanims\",\"pTweakDBID\": \"Items.RequiredItemStats\"";
+    this.m_jsonDto +=   "\"pEnum\": 2,\"pString\": \"Hello world!\",\"pCName\": \"VehicleObject\",\"pResRef\": \"base\\\\anim_cooked.cookedanims\",\"pTweakDBID\": \"Items.RequiredItemStats\"";
     this.m_jsonDto += "}";
 
     this.m_jsonNestedDto = "{";
@@ -312,6 +319,9 @@ public class JsonTest extends JsonBaseTest {
     this.ExpectDouble("dto.pDouble == 3.141592653589793", dto.pDouble, 3.141592653589793d);
     this.ExpectDouble("dto.pDoubleInt == 42.0", dto.pDoubleInt, 42.0d);
 
+    this.ExpectBool("Equals(dto.pEnum, CustomEnum.B)", Equals(dto.pEnum, CustomEnum.B), true);
+    this.ExpectInt32("EnumInt(dto.pEnum) == EnumInt(CustomEnum.B)", EnumInt(dto.pEnum), EnumInt(CustomEnum.B));
+    this.ExpectString("ToString(dto.pEnum) == ToString(CustomEnum.B)", ToString(dto.pEnum), ToString(CustomEnum.B));
     this.ExpectString("dto.pString == 'Hello world!'", dto.pString, "Hello world!");
     this.ExpectCName("dto.pCName == n'VehicleObject'", dto.pCName, n"VehicleObject");
     this.ExpectResRef("dto.pResRef == r'base\\anim_cooked.cookedanims'", dto.pResRef, r"base\\anim_cooked.cookedanims"); // Fails
@@ -396,7 +406,7 @@ public class JsonTest extends JsonBaseTest {
     types.pInt8 = Cast<Int8>(127); types.pInt16 = Cast<Int16>(32767); types.pInt32 = 2147483647; types.pInt64 = 9223372036854775807l;
     types.pUint8 = Cast<Uint8>(255u); types.pUint16 = Cast<Uint16>(65535u); types.pUint32 = 4294967295u; types.pUint64 = 18446744073709551615ul;
     types.pFloat = 3.141592; types.pFloatInt = 1.0; types.pDouble = 3.141592653589793d; types.pDoubleInt = 42.0d;
-    types.pString = "Hello world!"; types.pCName = n"VehicleObject"; types.pResRef = r"base\\anim_cooked.cookedanims"; types.pTweakDBID = t"Items.RequiredItemStats";
+    types.pEnum = CustomEnum.B; types.pString = "Hello world!"; types.pCName = n"VehicleObject"; types.pResRef = r"base\\anim_cooked.cookedanims"; types.pTweakDBID = t"Items.RequiredItemStats";
     let json = ToJson(types);
     let pass = this.ExpectBool("To Json", IsDefined(json), true);
 
@@ -428,6 +438,7 @@ public class JsonTest extends JsonBaseTest {
     this.ExpectJsonKeyDouble("$.pDouble == 3.141592653589793", obj, "pDouble", 3.141592653589793d);
     this.ExpectJsonKeyDouble("$.pDoubleInt == 42.0", obj, "pDoubleInt", 42.0d);
 
+    this.ExpectJsonKeyInt64("$.pEnum == CustomEnum.B", obj, "pEnum", Cast<Int64>(EnumInt(CustomEnum.B)));
     this.ExpectJsonKeyString("$.pString == 'Hello world!'", obj, "pString", "Hello world!");
     this.ExpectJsonKeyCName("$.pCName == n'VehicleObject'", obj, "pCName", n"VehicleObject");
     /* NOTE: cannot be transformed to Json, one way only.

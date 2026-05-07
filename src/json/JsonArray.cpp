@@ -41,11 +41,11 @@ std::string JsonArray::to_json(const JsonArray* p_array,
 }
 
 uint32_t JsonArray::get_size() const {
-  return items.size;
+  return items.Size();
 }
 
 Red::Handle<JsonVariant> JsonArray::get_item(const uint32_t p_index) const {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return {};
   }
 
@@ -54,7 +54,7 @@ Red::Handle<JsonVariant> JsonArray::get_item(const uint32_t p_index) const {
 
 void JsonArray::set_item(const uint32_t p_index,
                          const Red::Handle<JsonVariant>& p_item) {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return;
   }
 
@@ -67,13 +67,13 @@ bool JsonArray::remove_item(const uint32_t p_index) {
 
 void JsonArray::insert_item(const uint32_t p_index,
                             const Red::Handle<JsonVariant>& p_item) {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     add_item(p_item);
     return;
   }
 
-  items.PushBack(items[items.size - 1]);
-  for (uint32_t i = items.size - 1; i > p_index; i--) {
+  items.PushBack(items[items.Size() - 1]);
+  for (uint32_t i = items.Size() - 1; i > p_index; i--) {
     items[i] = items[i - 1];
   }
 
@@ -85,7 +85,7 @@ void JsonArray::add_item(const Red::Handle<JsonVariant>& p_item) {
 }
 
 bool JsonArray::get_item_bool(const uint32_t p_index) const {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return {};
   }
 
@@ -93,7 +93,7 @@ bool JsonArray::get_item_bool(const uint32_t p_index) const {
 }
 
 int64_t JsonArray::get_item_int64(const uint32_t p_index) const {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return {};
   }
 
@@ -101,7 +101,7 @@ int64_t JsonArray::get_item_int64(const uint32_t p_index) const {
 }
 
 uint64_t JsonArray::get_item_uint64(const uint32_t p_index) const {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return {};
   }
 
@@ -109,7 +109,7 @@ uint64_t JsonArray::get_item_uint64(const uint32_t p_index) const {
 }
 
 double JsonArray::get_item_double(const uint32_t p_index) const {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return {};
   }
 
@@ -117,7 +117,7 @@ double JsonArray::get_item_double(const uint32_t p_index) const {
 }
 
 Red::CString JsonArray::get_item_string(const uint32_t p_index) const {
-  if (p_index >= items.size) {
+  if (p_index >= items.Size()) {
     return {};
   }
 
