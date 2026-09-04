@@ -1,0 +1,64 @@
+name: Build Mod Package
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: write
+env:
+  TARGET_PLATFORM: windows
+  TARGET_ARCH: x64
+  # Reserved, disabled targets: windows_arm, macos_x64, macos_arm, linux_x64, linux_arm.
+  MOD_NAME: RedData
+jobs:
+  package:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Apply tag version to source
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: |
+          $config = Get-Content red.config.json -Raw | ConvertFrom-Json
+          $config.version = $env:GITHUB_REF_NAME.TrimStart('v')
+          $config | ConvertTo-Json -Depth 20 | Set-Content red.config.json
+      - name: Install red-cli
+        shell: pwsh
+        run: |
+          $release = Invoke-RestMethod https://api.github.com/repos/rayshader/cp2077-red-cli/releases/latest
+          $asset = $release.assets | Where-Object { $_.name -match '(windows|win64|msvc).*\.zip$' } | Select-Object -First 1
+          if (-not $asset) { throw "No Windows red-cli release asset found" }
+          Invoke-WebRequest $asset.browser_download_url -OutFile red-cli.zip
+          Expand-Archive red-cli.zip tools/red-cli
+          $exe = Get-ChildItem tools/red-cli -Recurse -Filter red-cli.exe | Select-Object -First 1
+          if (-not $exe) { throw "red-cli.exe was not found in the release archive" }
+          $exe.Directory.FullName >> $env:GITHUB_PATH
+      - name: Build windows_x64 and create upstream package
+        run: |
+          cmake -S . -B build -A x64
+          cmake --build build --target RedData --config Release
+      - name: Normalize artifact name
+        id: meta
+        shell: pwsh
+        run: |
+          $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { '0.0.0' }
+          $suffix = if ($env:GITHUB_REF_TYPE -eq 'tag') { '' } else { "_$(Get-Date -Format 'yyyy.M').$((git rev-list --count --since="$(Get-Date -Day 1 -Format yyyy-MM-dd)" HEAD))" }
+          $artifact = "${env:MOD_NAME}_v${version}_${env:TARGET_PLATFORM}_${env:TARGET_ARCH}${suffix}.zip"
+          $source = Get-ChildItem dist -Recurse -Filter *.zip | Select-Object -First 1
+          if (-not $source) { throw "red-cli pack did not produce a zip" }
+          Move-Item -LiteralPath $source.FullName -Destination $artifact -Force
+          "artifact=$artifact" >> $env:GITHUB_OUTPUT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.meta.outputs.artifact }}
+          path: ${{ steps.meta.outputs.artifact }}
+          if-no-files-found: error
+      - name: Create draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$env:GITHUB_REF_NAME" "${{ steps.meta.outputs.artifact }}" --draft --generate-notes --verify-tag
