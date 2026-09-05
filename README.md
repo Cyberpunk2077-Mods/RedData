@@ -425,4 +425,4 @@ find an archive `RedData-X.Y.Z.zip` in the root directory, ready to release.
 [Codeware]: https://github.com/psiberx/cp2077-codeware/wiki#lifecycle
 [examples/]: https://github.com/rayshader/cp2077-red-data/tree/master/examples
 [branch api]: https://github.com/rayshader/cp2077-red-data/tree/api
-[red-cli]: https://github.com/rayshader/cp2077-red-cli/releases/latest
+[red-cli]: https://github.com/Cyberpunk2077-Mods/RedCli/releases/latest
