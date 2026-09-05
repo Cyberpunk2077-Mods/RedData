@@ -11,6 +11,8 @@ env:
   TARGET_ARCH: x64
   # Reserved, disabled targets: windows_arm, macos_x64, macos_arm, linux_x64, linux_arm.
   MOD_NAME: RedData
+  # red-cli currently requires a game path even for `pack`; CI has no game install.
+  REDCLI_GAME: ${{ github.workspace }}/.ci/Cyberpunk2077
 jobs:
   package:
     runs-on: windows-2025
@@ -82,6 +84,11 @@ jobs:
           $exe = Get-ChildItem tools/red-cli -Recurse -Filter red-cli.exe | Select-Object -First 1
           if (-not $exe) { throw "red-cli.exe was not found under tools/red-cli" }
           $exe.Directory.FullName >> $env:GITHUB_PATH
+
+      - name: Prepare stub game dir for red-cli
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path $env:REDCLI_GAME | Out-Null
+
       - name: Build windows_x64 and create upstream package
         run: |
           cmake -S . -B build -A x64
