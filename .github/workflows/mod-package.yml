@@ -33,13 +33,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $headers = @{
-            Authorization = "Bearer $env:GH_TOKEN"
+            Authorization = "Bearer $($env:GH_TOKEN)"
             Accept = "application/vnd.github+json"
             "X-GitHub-Api-Version" = "2022-11-28"
           }
           # Org fork of red-cli (was rayshader/cp2077-red-cli).
-          $api = "https://api.github.com/repos/Cyberpunk2077-Mods/RedCli/releases"
-          $releases = @(Invoke-RestMethod -Headers $headers "$api?per_page=20")
+          # Use a literal URI — "$api?..." breaks under pwsh (? parsing).
+          $uri = "https://api.github.com/repos/Cyberpunk2077-Mods/RedCli/releases?per_page=20"
+          $releases = @(Invoke-RestMethod -Method Get -Uri $uri -Headers $headers)
           if (-not $releases) { throw "No releases found on Cyberpunk2077-Mods/RedCli (publish a windows_x64 package first)" }
           $chosen = $null
           $asset = $null
@@ -66,16 +67,12 @@ jobs:
         if: steps.redcli-cache.outputs.cache-hit != 'true'
         shell: pwsh
         env:
-          GH_TOKEN: ${{ github.token }}
           REDCLI_URL: ${{ steps.redcli.outputs.url }}
         run: |
-          $headers = @{
-            Authorization = "Bearer $env:GH_TOKEN"
-            Accept = "application/octet-stream"
-            "X-GitHub-Api-Version" = "2022-11-28"
-          }
+          if ([string]::IsNullOrWhiteSpace($env:REDCLI_URL)) { throw "REDCLI_URL is empty" }
           New-Item -ItemType Directory -Force -Path tools/red-cli | Out-Null
-          Invoke-WebRequest -Headers $headers -Uri $env:REDCLI_URL -OutFile red-cli.zip
+          # browser_download_url is a public CDN/GitHub release URL; do not send API Accept headers.
+          Invoke-WebRequest -Uri $env:REDCLI_URL -OutFile red-cli.zip
           Expand-Archive red-cli.zip tools/red-cli -Force
           Remove-Item red-cli.zip -Force
 
