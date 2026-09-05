@@ -100,8 +100,12 @@ jobs:
           $version = if ($env:GITHUB_REF_TYPE -eq 'tag') { $env:GITHUB_REF_NAME.TrimStart('v') } else { $stable = @(git tag -l --sort=-v:refname | Where-Object { $_ -match '^v?\d+\.\d+\.\d+$' }); $any = @(git tag -l --sort=-v:refname | Where-Object { $_ -match '^v?\d' }); $tag = $(@($stable + $any) | Select-Object -First 1); if ($tag) { $tag.TrimStart('v') } else { '0.0.0' } }
           $suffix = if ($env:GITHUB_REF_TYPE -eq 'tag') { '' } else { "_$(Get-Date -Format 'yyyy.M').$((git rev-list --count --since="$(Get-Date -Day 1 -Format yyyy-MM-dd)" HEAD))" }
           $artifact = "${env:MOD_NAME}_v${version}_${env:TARGET_PLATFORM}_${env:TARGET_ARCH}${suffix}.zip"
-          $source = Get-ChildItem dist -Recurse -Filter *.zip | Select-Object -First 1
-          if (-not $source) { throw "red-cli pack did not produce a zip" }
+          # red-cli pack writes "<name>-<version>.zip" to the project root (not dist/).
+          $source = Get-ChildItem -Path . -File -Filter "${env:MOD_NAME}-*.zip" | Select-Object -First 1
+          if (-not $source) {
+            $source = Get-ChildItem -Path dist -Recurse -File -Filter *.zip -ErrorAction SilentlyContinue | Select-Object -First 1
+          }
+          if (-not $source) { throw "red-cli pack did not produce a zip (expected ${env:MOD_NAME}-*.zip in repo root)" }
           Move-Item -LiteralPath $source.FullName -Destination $artifact -Force
           "artifact=$artifact" >> $env:GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
